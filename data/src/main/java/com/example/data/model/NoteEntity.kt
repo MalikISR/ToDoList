@@ -9,7 +9,10 @@ data class NoteEntity (
     val id:Int = 0,
     val title: String,
     val description: String,
-    val timestamp: Long,
+    val deadline: Long,
+    val createdAt: Long,
+    val updatedAt: Long,
     val color: Int,
-    val isPinned: Boolean
+    val isPinned: Boolean,
+    val isDeleted: Boolean
 )
