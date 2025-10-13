@@ -68,7 +68,7 @@ fun NoteDetailScreen(
         var title by remember(note) { mutableStateOf(note.title) }
         var description by remember(note) { mutableStateOf(note.description) }
         var selectedColor by rememberSaveable { mutableStateOf(note.color) }
-        var selectedTime by remember(note) { mutableStateOf(note.timestamp) }
+        var deadline by remember(note) { mutableStateOf(note.deadline) }
         var pinned by remember(note) { mutableStateOf(note.isPinned) }
 
         val context = LocalContext.current
@@ -90,9 +90,7 @@ fun NoteDetailScreen(
                                 note.copy(
                                     title = title,
                                     description = description,
-                                    color = selectedColor,
-                                    timestamp = selectedTime,
-                                    isPinned = pinned
+                                    updatedAt = System.currentTimeMillis()
                                 )
                             )
                         }) {
@@ -224,7 +222,7 @@ fun NoteDetailScreen(
                                         val cal = Calendar.getInstance()
                                         cal.set(Calendar.HOUR_OF_DAY, hour)
                                         cal.set(Calendar.MINUTE, minute)
-                                        selectedTime = cal.timeInMillis
+                                        deadline = cal.timeInMillis
                                     },
                                     calendar.get(Calendar.HOUR_OF_DAY),
                                     calendar.get(Calendar.MINUTE),
@@ -237,9 +235,9 @@ fun NoteDetailScreen(
                             Text("Выбрать время")
                         }
 
-                        if (selectedTime != null) {
+                        if (deadline != null) {
                             val formattedTime = SimpleDateFormat("HH:mm", Locale.getDefault())
-                                .format(Date(selectedTime))
+                                .format(Date(deadline))
                             Text(
                                 "Выбранное время: $formattedTime",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -273,8 +271,9 @@ fun NoteDetailScreen(
                                         title = title,
                                         description = description,
                                         color = selectedColor,
-                                        timestamp = selectedTime,
-                                        isPinned = pinned
+                                        deadline = deadline,
+                                        isPinned = pinned,
+                                        updatedAt = System.currentTimeMillis()
                                     )
                                 )
                                 showSettings = false

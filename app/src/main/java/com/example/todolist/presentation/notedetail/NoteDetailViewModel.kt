@@ -38,7 +38,10 @@ class NoteDetailViewModel @Inject constructor(
                 title = "",
                 description = "",
                 color = Color.Green.toArgb(),
-                timestamp = System.currentTimeMillis(),
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                deadline = System.currentTimeMillis() + 86400,
+                isDeleted = false,
                 isPinned = false
             )
         }
