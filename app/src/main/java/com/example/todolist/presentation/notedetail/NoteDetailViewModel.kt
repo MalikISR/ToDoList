@@ -21,14 +21,14 @@ class NoteDetailViewModel @Inject constructor(
     private val addNoteUseCase: AddNoteUseCase,
     private val updateNote: UpdateNoteUseCase,
     savedStateHandle: SavedStateHandle
-): ViewModel() {
+) : ViewModel() {
 
     private val _note = MutableStateFlow<Note?>(null)
     val note: StateFlow<Note?> = _note
 
     init {
         val noteId = savedStateHandle.get<Int>("noteId")
-        if (noteId != null){
+        if (noteId != null) {
             viewModelScope.launch {
                 _note.value = getNoteById(noteId)
             }
@@ -38,13 +38,16 @@ class NoteDetailViewModel @Inject constructor(
                 title = "",
                 description = "",
                 color = Color.Green.toArgb(),
-                timestamp = System.currentTimeMillis(),
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                deadline = System.currentTimeMillis() + 86400,
+                isDeleted = false,
                 isPinned = false
             )
         }
     }
 
-    fun saveNote(note: Note){
+    fun saveNote(note: Note) {
         viewModelScope.launch {
             if (note.id == 0) addNoteUseCase(note)
             else updateNote(note)
