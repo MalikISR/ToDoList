@@ -10,14 +10,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.todolist.presentation.auth.FirebaseAuthScreen
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.example.todolist.presentation.note.NoteScreen
 import com.example.todolist.presentation.productivity.ProductivityScreen
 import com.example.todolist.presentation.profile.ProfileScreen
 import com.example.todolist.presentation.notedetail.NoteDetailScreen
 import com.example.todolist.ui.navigation.BottomNavScreen
 import com.example.todolist.ui.theme.TodolistTheme
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -27,21 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TodolistTheme {
                 val navController = rememberNavController()
-                val currentUser = FirebaseAuth.getInstance().currentUser
-
-                if (currentUser == null) {
-                    // если пользователь не авторизован → сразу авторизация
-                    FirebaseAuthScreen(
-                        onAuthSuccess = {
-                            navController.navigate(BottomNavScreen.Notes.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
-                    )
-                } else {
-                    // иначе показываем нижнюю панель
-                    MainScaffold(navController)
-                }
+                MainScaffold(navController = navController)
             }
         }
     }
@@ -57,10 +43,10 @@ fun MainScaffold(navController: NavHostController) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
 
+            NavigationBar {
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.title) },
@@ -68,7 +54,9 @@ fun MainScaffold(navController: NavHostController) {
                         selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -83,6 +71,7 @@ fun MainScaffold(navController: NavHostController) {
             startDestination = BottomNavScreen.Notes.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Экран заметок
             composable(BottomNavScreen.Notes.route) {
                 NoteScreen(
                     onNoteClick = { noteId ->
@@ -93,13 +82,22 @@ fun MainScaffold(navController: NavHostController) {
                     }
                 )
             }
+
+            // Экран продуктивности
             composable(BottomNavScreen.Productivity.route) { ProductivityScreen() }
+
+            // Профиль
             composable(BottomNavScreen.Profile.route) { ProfileScreen() }
 
-            // Экран деталей заметки
-            composable("note_detail/{noteId}") {
+            // Детали существующей заметки с аргументом Int
+            composable(
+                route = "note_detail/{noteId}",
+                arguments = listOf(navArgument("noteId") { type = NavType.IntType })
+            ) {
                 NoteDetailScreen(onBack = { navController.popBackStack() })
             }
+
+            // Создание новой заметки (без аргумента)
             composable("note_detail_new") {
                 NoteDetailScreen(onBack = { navController.popBackStack() })
             }

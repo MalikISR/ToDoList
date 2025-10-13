@@ -68,7 +68,7 @@ fun NoteDetailScreen(
         var title by remember(note) { mutableStateOf(note.title) }
         var description by remember(note) { mutableStateOf(note.description) }
         var selectedColor by rememberSaveable { mutableStateOf(note.color) }
-        var selectedTime by remember(note) { mutableStateOf(note.timestamp) }
+        var deadline by remember(note) { mutableStateOf(note.deadline) }
         var pinned by remember(note) { mutableStateOf(note.isPinned) }
 
         val context = LocalContext.current
@@ -90,9 +90,7 @@ fun NoteDetailScreen(
                                 note.copy(
                                     title = title,
                                     description = description,
-                                    color = selectedColor,
-                                    timestamp = selectedTime,
-                                    isPinned = pinned
+                                    updatedAt = System.currentTimeMillis()
                                 )
                             )
                         }) {
@@ -129,7 +127,7 @@ fun NoteDetailScreen(
                             .background(
                                 Color.White,
                                 shape = RoundedCornerShape(4.dp)
-                            ), // поле текста белое
+                            ),
                         singleLine = true,
                         colors = TextFieldDefaults.textFieldColors(
                             containerColor = Color.Transparent,
@@ -139,14 +137,12 @@ fun NoteDetailScreen(
                         )
                     )
 
-                    // Разделитель
                     Divider(
                         color = Color(0xFFCCCCCC),
                         thickness = 1.dp,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
 
-                    // Описание
                     TextField(
                         value = description,
                         onValueChange = { description = it },
@@ -158,7 +154,7 @@ fun NoteDetailScreen(
                             .background(
                                 Color.White,
                                 shape = RoundedCornerShape(4.dp)
-                            ), // поле текста белое
+                            ),
                         singleLine = false,
                         colors = TextFieldDefaults.textFieldColors(
                             containerColor = Color.Transparent,
@@ -170,7 +166,6 @@ fun NoteDetailScreen(
                 }
             }
 
-            // Настройки (шторка)
             if (showSettings) {
                 ModalBottomSheet(
                     onDismissRequest = { showSettings = false }
@@ -186,7 +181,6 @@ fun NoteDetailScreen(
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
 
-                        // Цвет заметки
                         Text("Цвет заметки")
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -214,7 +208,6 @@ fun NoteDetailScreen(
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Выбор времени
                         Button(
                             onClick = {
                                 val calendar = Calendar.getInstance()
@@ -224,7 +217,7 @@ fun NoteDetailScreen(
                                         val cal = Calendar.getInstance()
                                         cal.set(Calendar.HOUR_OF_DAY, hour)
                                         cal.set(Calendar.MINUTE, minute)
-                                        selectedTime = cal.timeInMillis
+                                        deadline = cal.timeInMillis
                                     },
                                     calendar.get(Calendar.HOUR_OF_DAY),
                                     calendar.get(Calendar.MINUTE),
@@ -237,9 +230,9 @@ fun NoteDetailScreen(
                             Text("Выбрать время")
                         }
 
-                        if (selectedTime != null) {
+                        if (deadline != null) {
                             val formattedTime = SimpleDateFormat("HH:mm", Locale.getDefault())
-                                .format(Date(selectedTime))
+                                .format(Date(deadline))
                             Text(
                                 "Выбранное время: $formattedTime",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -249,7 +242,6 @@ fun NoteDetailScreen(
 
                         Spacer(Modifier.height(16.dp))
 
-                        // 🔹 Новый чекбокс "Закрепить заметку"
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -265,7 +257,6 @@ fun NoteDetailScreen(
 
                         Spacer(Modifier.height(24.dp))
 
-                        // Сохранение
                         Button(
                             onClick = {
                                 viewModel.saveNote(
@@ -273,8 +264,9 @@ fun NoteDetailScreen(
                                         title = title,
                                         description = description,
                                         color = selectedColor,
-                                        timestamp = selectedTime,
-                                        isPinned = pinned
+                                        deadline = deadline,
+                                        isPinned = pinned,
+                                        updatedAt = System.currentTimeMillis()
                                     )
                                 )
                                 showSettings = false
@@ -299,7 +291,7 @@ fun ColorOption(color: Color, label: String, selected: Boolean, onClick: () -> U
                 .clip(CircleShape)
                 .background(color)
                 .border(
-                    width = if (selected) 4.dp else 0.dp, // обводка только у выбранного
+                    width = if (selected) 4.dp else 0.dp,
                     color = if (selected) Color.Black else Color.Transparent,
                     shape = CircleShape
                 )
