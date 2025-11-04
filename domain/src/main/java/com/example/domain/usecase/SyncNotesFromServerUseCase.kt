@@ -3,8 +3,8 @@ package com.example.domain.usecase
 import com.example.domain.repository.NoteRepository
 import javax.inject.Inject
 
-class GetNoteByIdUseCase @Inject constructor(
+class SyncNotesFromServerUseCase @Inject constructor(
     private val repository: NoteRepository
 ) {
-    suspend operator fun invoke(id: Int) = repository.getNoteById(id)
+    suspend operator fun invoke() = repository.syncFromServer()
 }

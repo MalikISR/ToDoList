@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import com.example.data.local.NoteDao
 import com.example.data.local.NoteDatabase
-import com.example.data.repository.LocalNoteRepositoryImpl
 import com.example.domain.repository.NoteRepository
 import com.example.domain.usecase.*
-import com.example.todolist.repository.FirebaseNoteDataSource
+import com.example.data.remote.FirebaseNoteDataSource
+import com.example.data.repository.NoteRepositoryImpl
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -22,8 +22,8 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideRepository(noteDao: NoteDao): NoteRepository {
-        return LocalNoteRepositoryImpl(noteDao)
+    fun provideRepository(noteDao: NoteDao, remote: FirebaseNoteDataSource): NoteRepository {
+        return NoteRepositoryImpl(noteDao, remote)
     }
 
     @Provides
@@ -31,7 +31,10 @@ object AppModule {
         return NoteUseCase(
             getNotes = GetNotesUseCase(repository),
             addNote = AddNoteUseCase(repository),
-            deleteNote = DeleteNoteUseCase(repository)
+            deleteNote = DeleteNoteUseCase(repository),
+            updateNote = UpdateNoteUseCase(repository),
+            syncFromServer = SyncNotesFromServerUseCase(repository),
+            syncToServer = SyncNotesToServerUseCase(repository)
         )
     }
 

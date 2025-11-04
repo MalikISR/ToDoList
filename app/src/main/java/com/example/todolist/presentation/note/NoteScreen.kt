@@ -48,6 +48,20 @@ fun NoteScreen(
                 modifier = Modifier.weight(1f)
             )
 
+            Button(
+                onClick = { viewModel.syncFromServer() },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text("Синхр. с сервером")
+            }
+
+            Button(
+                onClick = { viewModel.syncToServer() },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text("Отправить на сервер")
+            }
+
             Button(onClick = { onAddNoteClick() }) {
                 Text("Добавить")
             }

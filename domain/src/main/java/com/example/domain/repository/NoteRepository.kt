@@ -7,8 +7,8 @@ interface NoteRepository {
     fun getAllNotes(): Flow<List<Note>>
     suspend fun insertNote(note: Note)
     suspend fun deleteNote(note: Note)
-    suspend fun getNoteByIdUseCase (id: Int): Note?
-    suspend fun updateNoteUseCase (note: Note)
-
-    suspend fun syncNotes()
+    suspend fun getNoteById(id: Int): Note?
+    suspend fun updateNote(note: Note)
+    suspend fun syncFromServer()
+    suspend fun syncToServer()
 }

@@ -1,4 +1,4 @@
-package com.example.todolist.repository
+package com.example.data.remote
 
 import com.example.domain.model.Note
 import com.google.firebase.auth.FirebaseAuth
@@ -18,17 +18,27 @@ class FirebaseNoteDataSource @Inject constructor(
             .document(uid)
             .collection("notes")
             .document(note.id.toString())
-            .set(note)
+            .set(note.toRemote())
             .await()
     }
 
-    suspend fun getNotesRemote(): List<Note> {
+    suspend fun getNotesRemote(): List<NoteRemote> {
         val uid = userId() ?: return emptyList()
         val snapshot = firestore.collection("users")
             .document(uid)
             .collection("notes")
             .get()
             .await()
-        return snapshot.toObjects(Note::class.java)
+        return snapshot.toObjects(NoteRemote::class.java)
+    }
+
+    suspend fun deleteNoteRemote(noteId: Int) {
+        val uid = userId() ?: return
+        firestore.collection("users")
+            .document(uid)
+            .collection("notes")
+            .document(noteId.toString())
+            .delete()
+            .await()
     }
 }

@@ -25,4 +25,5 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
     updatedAt = updatedAt,
     isDeleted = isDeleted,
     isPinned = isPinned,
+    isSynced = false
 )
