@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Note
 import com.example.domain.usecase.DeleteNoteUseCase
 import com.example.domain.usecase.GetNotesUseCase
-import com.example.domain.usecase.SyncNotesFromServerUseCase
-import com.example.domain.usecase.SyncNotesToServerUseCase
+import com.example.domain.usecase.SyncNotesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +16,7 @@ import javax.inject.Inject
 class NoteViewModel @Inject constructor(
     private val getNotesUseCase: GetNotesUseCase,
     private val deleteNoteUseCase: DeleteNoteUseCase,
-    private val syncFromServerUseCase: SyncNotesFromServerUseCase,
-    private val syncToServerUseCase: SyncNotesToServerUseCase
+    private val syncUseCase: SyncNotesUseCase
 ) : ViewModel() {
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
@@ -26,6 +24,7 @@ class NoteViewModel @Inject constructor(
 
     init {
         loadNotes()
+        syncServer()
     }
 
     fun loadNotes() {
@@ -43,16 +42,10 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun syncFromServer() {
+    fun syncServer() {
         viewModelScope.launch {
-            syncFromServerUseCase()
+            syncUseCase()
             loadNotes() // после загрузки обновляем UI
-        }
-    }
-
-    fun syncToServer() {
-        viewModelScope.launch {
-            syncToServerUseCase()
         }
     }
 }

@@ -1,5 +1,8 @@
-package com.example.data.remote
+package com.example.todolist.remote
 
+import com.example.data.remote.NoteRemote
+import com.example.data.remote.NoteRemoteDataSource
+import com.example.data.remote.toRemote
 import com.example.domain.model.Note
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -9,10 +12,11 @@ import javax.inject.Inject
 class FirebaseNoteDataSource @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
-) {
+) : NoteRemoteDataSource {
+
     private fun userId(): String? = auth.currentUser?.uid
 
-    suspend fun saveNoteRemote(note: Note) {
+    override suspend fun saveNoteRemote(note: Note) {
         val uid = userId() ?: return
         firestore.collection("users")
             .document(uid)
@@ -22,7 +26,7 @@ class FirebaseNoteDataSource @Inject constructor(
             .await()
     }
 
-    suspend fun getNotesRemote(): List<NoteRemote> {
+    override suspend fun getNotesRemote(): List<NoteRemote> {
         val uid = userId() ?: return emptyList()
         val snapshot = firestore.collection("users")
             .document(uid)
@@ -32,7 +36,7 @@ class FirebaseNoteDataSource @Inject constructor(
         return snapshot.toObjects(NoteRemote::class.java)
     }
 
-    suspend fun deleteNoteRemote(noteId: Int) {
+    override suspend fun deleteNoteRemote(noteId: Int) {
         val uid = userId() ?: return
         firestore.collection("users")
             .document(uid)

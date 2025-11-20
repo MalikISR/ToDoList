@@ -18,11 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,9 +44,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.todolist.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -90,11 +90,17 @@ fun NoteDetailScreen(
                                 note.copy(
                                     title = title,
                                     description = description,
+                                    color = selectedColor,
+                                    deadline = deadline,
+                                    isPinned = pinned,
                                     updatedAt = System.currentTimeMillis()
                                 )
                             )
                         }) {
-                            Icon(Icons.Default.Done, contentDescription = "Сохранить")
+                            Icon(
+                                painter = painterResource(R.drawable.ic_save),
+                                contentDescription = "Сохранить"
+                            )
                         }
                         IconButton(onClick = { showSettings = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "Настройки")
@@ -107,13 +113,13 @@ fun NoteDetailScreen(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize()
-                    .background(Color.White) // фон страницы
+                    .background(Color.White)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEDEDED)) // сероватый фон "границ" заметки
-                        .padding(10.dp)
+                        .background(Color(selectedColor))
+                        .padding(6.dp)
                         .clip(RoundedCornerShape(8.dp))
                 ) {
                     // Заголовок
@@ -137,31 +143,17 @@ fun NoteDetailScreen(
                         )
                     )
 
-                    Divider(
-                        color = Color(0xFFCCCCCC),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    TextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        placeholder = { Text("Введите описание...") },
-                        textStyle = MaterialTheme.typography.bodyLarge,
+                    RichNoteEditor(
+                        initialHtml = description,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
+                            .padding(top = 6.dp)
                             .background(
                                 Color.White,
                                 shape = RoundedCornerShape(4.dp)
                             ),
-                        singleLine = false,
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        )
+                        onHtmlChange = { html -> description = html }
                     )
                 }
             }
@@ -257,24 +249,24 @@ fun NoteDetailScreen(
 
                         Spacer(Modifier.height(24.dp))
 
-                        Button(
-                            onClick = {
-                                viewModel.saveNote(
-                                    note.copy(
-                                        title = title,
-                                        description = description,
-                                        color = selectedColor,
-                                        deadline = deadline,
-                                        isPinned = pinned,
-                                        updatedAt = System.currentTimeMillis()
-                                    )
-                                )
-                                showSettings = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Сохранить")
-                        }
+//                        Button(
+//                            onClick = {
+//                                viewModel.saveNote(
+//                                    note.copy(
+//                                        title = title,
+//                                        description = description,
+//                                        color = selectedColor,
+//                                        deadline = deadline,
+//                                        isPinned = pinned,
+//                                        updatedAt = System.currentTimeMillis()
+//                                    )
+//                                )
+//                                showSettings = false
+//                            },
+//                            modifier = Modifier.fillMaxWidth()
+//                        ) {
+//                            Text("Сохранить")
+//                        }
                     }
                 }
             }

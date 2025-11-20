@@ -6,8 +6,8 @@ import com.example.data.local.NoteDao
 import com.example.data.local.NoteDatabase
 import com.example.domain.repository.NoteRepository
 import com.example.domain.usecase.*
-import com.example.data.remote.FirebaseNoteDataSource
 import com.example.data.repository.NoteRepositoryImpl
+import com.example.todolist.remote.FirebaseNoteDataSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -33,8 +33,7 @@ object AppModule {
             addNote = AddNoteUseCase(repository),
             deleteNote = DeleteNoteUseCase(repository),
             updateNote = UpdateNoteUseCase(repository),
-            syncFromServer = SyncNotesFromServerUseCase(repository),
-            syncToServer = SyncNotesToServerUseCase(repository)
+            syncFromServer = SyncNotesUseCase(repository)
         )
     }
 

@@ -5,6 +5,5 @@ class NoteUseCase(
     val addNote: AddNoteUseCase,
     val deleteNote: DeleteNoteUseCase,
     val updateNote: UpdateNoteUseCase,
-    val syncFromServer: SyncNotesFromServerUseCase,
-    val syncToServer: SyncNotesToServerUseCase
+    val syncFromServer: SyncNotesUseCase,
 )

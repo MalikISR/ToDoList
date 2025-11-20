@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,8 +27,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.todolist.R
+
 
 @Composable
 fun NoteScreen(
@@ -45,25 +52,15 @@ fun NoteScreen(
             Text(
                 text = "Заметки",
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).width(150.dp)
             )
 
-            Button(
-                onClick = { viewModel.syncFromServer() },
-                modifier = Modifier.padding(end = 8.dp)
+            IconButton( onClick = { onAddNoteClick() },
             ) {
-                Text("Синхр. с сервером")
-            }
-
-            Button(
-                onClick = { viewModel.syncToServer() },
-                modifier = Modifier.padding(end = 8.dp)
-            ) {
-                Text("Отправить на сервер")
-            }
-
-            Button(onClick = { onAddNoteClick() }) {
-                Text("Добавить")
+                Icon(
+                    painter = painterResource(R.drawable.ic_add_notes),
+                    contentDescription = "Добавить"
+                )
             }
         }
 
@@ -74,14 +71,14 @@ fun NoteScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                         .clickable { onNoteClick(note.id) },
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
@@ -102,18 +99,12 @@ fun NoteScreen(
                         }
 
                         Button(
-                            onClick = { viewModel.deleteNote(note) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Black,
-                                contentColor = Color.Red
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .width(36.dp)
-                                .height(36.dp)
+                            onClick = { viewModel.deleteNote(note) }
                         ) {
-                            Text("✕")
+                            Icon(
+                                painter = painterResource(R.drawable.ic_delete),
+                                contentDescription = "Удалить"
+                            )
                         }
                     }
                 }
