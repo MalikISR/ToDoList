@@ -3,7 +3,7 @@ package com.example.data.remote
 import com.example.domain.model.Note
 
 data class NoteRemote(
-    val id: Int = 0,
+    val id: String = "",
     val title: String = "",
     val description: String = "",
     val deadline: Long = 0,
@@ -11,7 +11,9 @@ data class NoteRemote(
     val updatedAt: Long = 0,
     val color: Int = 0,
     val isPinned: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val isSynced: Boolean = false,
+    val isDone: Boolean = false
 )
 
 fun Note.toRemote(): NoteRemote = NoteRemote(
@@ -23,7 +25,9 @@ fun Note.toRemote(): NoteRemote = NoteRemote(
     updatedAt = updatedAt,
     color = color,
     isPinned = isPinned,
-    isDeleted = isDeleted
+    isDeleted = isDeleted,
+    isSynced = isSynced,
+    isDone = isDone
 )
 
 fun NoteRemote.toDomain(): Note = Note(
@@ -35,5 +39,7 @@ fun NoteRemote.toDomain(): Note = Note(
     updatedAt = updatedAt,
     color = color,
     isPinned = isPinned,
-    isDeleted = isDeleted
+    isDeleted = isDeleted,
+    isSynced = isSynced,
+    isDone = isDone
 )

@@ -7,4 +7,82 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="pin_active">#FF9800</color>
+
+    <color name="done_green">#4CAF50</color>
+
+
+    <!-- Gray scale -->
+    <color name="palette_gray_900">#212121</color>
+    <color name="palette_gray_700">#424242</color>
+    <color name="palette_gray_600">#616161</color>
+    <color name="palette_gray_400">#9E9E9E</color>
+    <color name="palette_gray_300">#BDBDBD</color>
+    <color name="palette_gray_200">#E0E0E0</color>
+    <color name="palette_white">#FFFFFF</color>
+    <color name="palette_black">#000000</color>
+
+    <!-- Red -->
+    <color name="palette_red_900">#D50000</color>
+    <color name="palette_red_700">#F44336</color>
+    <color name="palette_red_500">#FF7961</color>
+    <color name="palette_red_200">#FFCDD2</color>
+
+    <!-- Orange -->
+    <color name="palette_orange_700">#FF5722</color>
+    <color name="palette_orange_500">#FF9800</color>
+    <color name="palette_orange_300">#FFB74D</color>
+    <color name="palette_orange_100">#FFE0B2</color>
+
+    <!-- Yellow -->
+    <color name="palette_yellow_500">#FFEB3B</color>
+    <color name="palette_yellow_300">#FFF176</color>
+    <color name="palette_yellow_100">#FFF9C4</color>
+
+    <!-- Green -->
+    <color name="palette_green_800">#2E7D32</color>
+    <color name="palette_green_600">#4CAF50</color>
+    <color name="palette_green_300">#81C784</color>
+    <color name="palette_green_100">#C8E6C9</color>
+
+    <!-- Lime -->
+    <color name="palette_lime_500">#8BC34A</color>
+    <color name="palette_lime_300">#AED581</color>
+    <color name="palette_lime_100">#DCEDC8</color>
+
+    <!-- Teal -->
+    <color name="palette_teal_800">#00695C</color>
+    <color name="palette_teal_600">#009688</color>
+    <color name="palette_teal_300">#4DB6AC</color>
+    <color name="palette_teal_100">#B2DFDB</color>
+
+    <!-- Blue -->
+    <color name="palette_blue_900">#0D47A1</color>
+    <color name="palette_blue_500">#2196F3</color>
+    <color name="palette_blue_300">#64B5F6</color>
+    <color name="palette_blue_100">#BBDEFB</color>
+
+    <!-- Indigo -->
+    <color name="palette_indigo_900">#1A237E</color>
+    <color name="palette_indigo_600">#3F51B5</color>
+    <color name="palette_indigo_300">#7986CB</color>
+    <color name="palette_indigo_100">#C5CAE9</color>
+
+    <!-- Purple -->
+    <color name="palette_purple_900">#4A148C</color>
+    <color name="palette_purple_600">#673AB7</color>
+    <color name="palette_purple_300">#9575CD</color>
+    <color name="palette_purple_100">#D1C4E9</color>
+
+    <!-- Pink -->
+    <color name="palette_pink_700">#C2185B</color>
+    <color name="palette_pink_500">#E91E63</color>
+    <color name="palette_pink_300">#F48FB1</color>
+    <color name="palette_pink_100">#FCE4EC</color>
+
+    <!-- Cyan -->
+    <color name="palette_cyan_600">#00ACC1</color>
+    <color name="palette_cyan_400">#26C6DA</color>
+    <color name="palette_cyan_200">#80DEEA</color>
 </resources>

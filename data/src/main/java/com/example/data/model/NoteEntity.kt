@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "notes")
 data class NoteEntity (
-    @PrimaryKey(autoGenerate = true)
-    val id:Int = 0,
+    @PrimaryKey
+    val id:String,
     val title: String,
     val description: String,
     val deadline: Long,
@@ -15,5 +15,6 @@ data class NoteEntity (
     val color: Int,
     val isPinned: Boolean,
     val isDeleted: Boolean,
-    val isSynced: Boolean = false
+    val isSynced: Boolean,
+    val isDone: Boolean
 )

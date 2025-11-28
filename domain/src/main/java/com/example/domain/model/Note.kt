@@ -1,7 +1,9 @@
 package com.example.domain.model
 
+import java.util.UUID
+
 data class Note (
-    val id:Int = 0,
+    val id: String = UUID.randomUUID().toString(),
     val title: String,
     val description: String,
     val deadline: Long,
@@ -10,5 +12,6 @@ data class Note (
     val color: Int,
     val isPinned: Boolean,
     val isDeleted: Boolean,
-    val isSynced: Boolean = false
-    )
+    val isSynced: Boolean = false,
+    val isDone: Boolean
+)

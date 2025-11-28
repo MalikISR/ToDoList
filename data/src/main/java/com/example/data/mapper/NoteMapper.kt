@@ -13,6 +13,8 @@ fun NoteEntity.toDomain(): Note = Note(
     updatedAt = updatedAt,
     isDeleted = isDeleted,
     isPinned = isPinned,
+    isSynced = isSynced,
+    isDone = isDone
 )
 
 fun Note.toEntity(): NoteEntity = NoteEntity(
@@ -25,5 +27,6 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
     updatedAt = updatedAt,
     isDeleted = isDeleted,
     isPinned = isPinned,
-    isSynced = false
+    isSynced = isSynced,
+    isDone = isDone
 )

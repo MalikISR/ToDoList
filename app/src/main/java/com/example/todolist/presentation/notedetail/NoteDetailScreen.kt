@@ -1,6 +1,9 @@
 package com.example.todolist.presentation.notedetail
 
+import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -19,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +35,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -70,15 +75,29 @@ fun NoteDetailScreen(
         var selectedColor by rememberSaveable { mutableStateOf(note.color) }
         var deadline by remember(note) { mutableStateOf(note.deadline) }
         var pinned by remember(note) { mutableStateOf(note.isPinned) }
+        var showDateTimePicker by remember { mutableStateOf(false) }
+        val savedEvent by viewModel.savedEvent.collectAsState()
+        val iconColor by animateColorAsState(
+            targetValue = if (savedEvent) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface,
+            animationSpec = tween(durationMillis = 300),
+            label = "SaveIconColor"
+        )
 
-        val context = LocalContext.current
-
-        val colors = listOf(Color.Green, Color.Yellow, Color.Red)
+        LaunchedEffect(title, description, selectedColor, deadline, pinned) {
+            val updated = note.copy(
+                title = title,
+                description = description,
+                color = selectedColor,
+                deadline = deadline,
+                isPinned = pinned
+            )
+            viewModel.onNoteChanged(updated)
+        }
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Детали заметки") },
+                    title = { Text("Заметка") },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
@@ -93,13 +112,16 @@ fun NoteDetailScreen(
                                     color = selectedColor,
                                     deadline = deadline,
                                     isPinned = pinned,
-                                    updatedAt = System.currentTimeMillis()
+                                    updatedAt = System.currentTimeMillis(),
+                                    isDone = false,
+                                    isSynced = false
                                 )
                             )
                         }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_save),
-                                contentDescription = "Сохранить"
+                                contentDescription = "Сохранить",
+                                tint = iconColor
                             )
                         }
                         IconButton(onClick = { showSettings = true }) {
@@ -113,16 +135,17 @@ fun NoteDetailScreen(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(selectedColor))
-                        .padding(6.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(10.dp)
+                        .shadow(0.dp, RoundedCornerShape(12.dp))
                 ) {
-                    // Заголовок
+
                     TextField(
                         value = title,
                         onValueChange = { title = it },
@@ -131,32 +154,48 @@ fun NoteDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                Color.White,
-                                shape = RoundedCornerShape(4.dp)
-                            ),
+                                MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(4.dp),
                         singleLine = true,
                         colors = TextFieldDefaults.textFieldColors(
                             containerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
+                            unfocusedIndicatorColor = Color.Transparent
                         )
                     )
 
-                    RichNoteEditor(
-                        initialHtml = description,
+                    Spacer(Modifier.height(10.dp))
+
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f)
-                            .padding(top = 6.dp)
-                            .background(
-                                Color.White,
-                                shape = RoundedCornerShape(4.dp)
-                            ),
-                        onHtmlChange = { html -> description = html }
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color(selectedColor))
                     )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(6.dp)
+                    ) {
+                        RichNoteEditor(
+                            initialHtml = description,
+                            onHtmlChange = { html -> description = html },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 200.dp)
+                        )
+                    }
                 }
             }
+
 
             if (showSettings) {
                 ModalBottomSheet(
@@ -165,130 +204,147 @@ fun NoteDetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+
                         Text(
-                            "Настройки",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            "Настройки заметки",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 24.dp)
                         )
 
-                        Text("Цвет заметки")
+                        Text(
+                            "Приоритет заметки",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            ColorOption(
-                                color = Color.Green,
-                                label = "Зелёный",
-                                selected = selectedColor == Color.Green.toArgb(),
-                                onClick = { selectedColor = Color.Green.toArgb() }
-                            )
-                            ColorOption(
-                                color = Color.Yellow,
-                                label = "Жёлтый",
-                                selected = selectedColor == Color.Yellow.toArgb(),
-                                onClick = { selectedColor = Color.Yellow.toArgb() }
-                            )
-                            ColorOption(
+
+                            PriorityColorOption(
                                 color = Color.Red,
-                                label = "Красный",
+                                name = "Срочная",
                                 selected = selectedColor == Color.Red.toArgb(),
                                 onClick = { selectedColor = Color.Red.toArgb() }
                             )
+
+                            PriorityColorOption(
+                                color = Color.Yellow,
+                                name = "Важная",
+                                selected = selectedColor == Color.Yellow.toArgb(),
+                                onClick = { selectedColor = Color.Yellow.toArgb() }
+                            )
+
+                            PriorityColorOption(
+                                color = Color.Green,
+                                name = "Обычная",
+                                selected = selectedColor == Color.Green.toArgb(),
+                                onClick = { selectedColor = Color.Green.toArgb() }
+                            )
                         }
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(30.dp))
 
-                        Button(
-                            onClick = {
-                                val calendar = Calendar.getInstance()
-                                val timePicker = TimePickerDialog(
-                                    context,
-                                    { _, hour, minute ->
-                                        val cal = Calendar.getInstance()
-                                        cal.set(Calendar.HOUR_OF_DAY, hour)
-                                        cal.set(Calendar.MINUTE, minute)
-                                        deadline = cal.timeInMillis
-                                    },
-                                    calendar.get(Calendar.HOUR_OF_DAY),
-                                    calendar.get(Calendar.MINUTE),
-                                    true
-                                )
-                                timePicker.show()
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                        Text(
+                            "Дедлайн",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { showDateTimePicker = true },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Выбрать время")
-                        }
-
-                        if (deadline != null) {
-                            val formattedTime = SimpleDateFormat("HH:mm", Locale.getDefault())
-                                .format(Date(deadline))
                             Text(
-                                "Выбранное время: $formattedTime",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(top = 8.dp)
+                                text = formatFullDateRu(deadline),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(20.dp))
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Checkbox(
-                                checked = pinned,
-                                onCheckedChange = { isChecked ->
-                                    pinned = isChecked
-                                }
-                            )
-                            Text("Закрепить заметку", style = MaterialTheme.typography.bodyLarge)
+                        if (showDateTimePicker) {
+                            val context = LocalContext.current
+                            val cal = Calendar.getInstance()
+
+                            DatePickerDialog(
+                                context,
+                                { _, year, month, day ->
+                                    TimePickerDialog(
+                                        context,
+                                        { _, hour, minute ->
+                                            val c = Calendar.getInstance()
+                                            c.set(year, month, day, hour, minute)
+                                            deadline = c.timeInMillis
+                                            showDateTimePicker = false
+                                        },
+                                        cal.get(Calendar.HOUR_OF_DAY),
+                                        cal.get(Calendar.MINUTE),
+                                        true
+                                    ).show()
+                                },
+                                cal.get(Calendar.YEAR),
+                                cal.get(Calendar.MONTH),
+                                cal.get(Calendar.DAY_OF_MONTH)
+                            ).show()
                         }
 
-                        Spacer(Modifier.height(24.dp))
-
-//                        Button(
-//                            onClick = {
-//                                viewModel.saveNote(
-//                                    note.copy(
-//                                        title = title,
-//                                        description = description,
-//                                        color = selectedColor,
-//                                        deadline = deadline,
-//                                        isPinned = pinned,
-//                                        updatedAt = System.currentTimeMillis()
-//                                    )
-//                                )
-//                                showSettings = false
-//                            },
-//                            modifier = Modifier.fillMaxWidth()
-//                        ) {
-//                            Text("Сохранить")
-//                        }
+                        Spacer(Modifier.height(32.dp))
                     }
                 }
             }
+
         }
     }
 }
 
 @Composable
-fun ColorOption(color: Color, label: String, selected: Boolean, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun PriorityColorOption(
+    color: Color,
+    name: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    ) {
+
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(56.dp)
                 .clip(CircleShape)
                 .background(color)
                 .border(
-                    width = if (selected) 4.dp else 0.dp,
-                    color = if (selected) Color.Black else Color.Transparent,
+                    width = if (selected) 4.dp else 2.dp,
+                    color = if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                     shape = CircleShape
                 )
                 .clickable { onClick() }
         )
-        Text(label, style = MaterialTheme.typography.bodySmall)
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            name,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
+}
+
+
+fun formatFullDateRu(time: Long): String {
+    val formatter = SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru"))
+    return formatter.format(Date(time))
 }

@@ -1,95 +1,82 @@
 package com.example.todolist.presentation.auth
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun AuthScreen(
-    onAuthSuccess: (userId: String) -> Unit
+    viewModel: AuthViewModel = hiltViewModel(),
+    onAuthSuccess: () -> Unit
 ) {
-    val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val success by viewModel.success.collectAsState()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var isLoginMode by remember { mutableStateOf(true) }
 
+    LaunchedEffect(success) {
+        if (success) {
+            onAuthSuccess()
+            viewModel.resetStatus()
+        }
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
-        // Ввод email
+
+        if (error != null) {
+            Text(text = "Ошибка: $error", color = MaterialTheme.colorScheme.error)
+        }
+
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Email") }
         )
 
-        // Ввод имени только при регистрации
         if (!isLoginMode) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Имя") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Имя") }
             )
         }
 
-        // Ввод пароля
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Пароль") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Пароль") }
         )
 
-        // Кнопка входа/регистрации
         Button(
             onClick = {
                 if (isLoginMode) {
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                onAuthSuccess(auth.currentUser?.uid ?: "")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Ошибка входа: ${task.exception?.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
+                    viewModel.login(email, password)
                 } else {
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                val profileUpdates = UserProfileChangeRequest.Builder()
-                                    .setDisplayName(name)
-                                    .build()
-                                auth.currentUser?.updateProfile(profileUpdates)
-                                    ?.addOnCompleteListener {
-                                        onAuthSuccess(auth.currentUser?.uid ?: "")
-                                    }
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Ошибка регистрации: ${task.exception?.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
+                    viewModel.register(email, password, name)
                 }
             },
+            enabled = !loading,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
@@ -103,7 +90,12 @@ fun AuthScreen(
                 .fillMaxWidth()
                 .padding(top = 8.dp)
         ) {
-            Text(if (isLoginMode) "Нет аккаунта? Зарегистрироваться" else "Уже есть аккаунт? Войти")
+            Text(
+                if (isLoginMode)
+                    "Нет аккаунта? Зарегистрироваться"
+                else
+                    "Уже есть аккаунт? Войти"
+            )
         }
     }
 }

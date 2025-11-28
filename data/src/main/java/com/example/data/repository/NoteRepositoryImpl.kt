@@ -16,82 +16,80 @@ class NoteRepositoryImpl(
 ) : NoteRepository {
 
     override fun getAllNotes(): Flow<List<Note>> =
-        local.getAllNotes().map { list -> list.map { it.toDomain() } }
+        local.getAllNotes()
+            .map { list ->
+                list
+                    .map { it.toDomain() }
+                    .filter { !it.isDeleted }
+            }
 
     override suspend fun insertNote(note: Note) {
         local.insertNote(note.toEntity())
-        remote.saveNoteRemote(note)
     }
 
     override suspend fun updateNote(note: Note) {
         local.updateNote(note.toEntity())
-        remote.saveNoteRemote(note)
     }
 
     override suspend fun deleteNote(note: Note) {
-        local.deleteNote(note.toEntity())
-        remote.deleteNoteRemote(note.id)
+        val entity = note.copy(isDeleted = true, isSynced = false)
+        local.updateNote(entity.toEntity())
     }
 
-    override suspend fun getNoteById(id: Int): Note? {
-        return local.getNoteById(id)?.toDomain()
+    override suspend fun getNoteById(id: String): Note? {
+        return local.getNoteById(id)?.toDomain()?.takeIf { !it.isDeleted }
     }
 
     override suspend fun sync() {
-        // 1. Загружаем серверные заметки
+
+        // 0. Проверка авторизации
+        if (!remote.isAuthorized()) {
+            return
+        }
+        // === 1. Получаем серверные заметки ===
         val remoteNotes = remote.getNotesRemote().map { it.toDomain() }
         val remoteIds = remoteNotes.map { it.id }.toSet()
+        val localNotesOnce = local.getAllNotesOnce()
 
-        // 2. Берём локальные (один раз для эффективности)
-        val localNotes = local.getAllNotesOnce()
 
-        // 3. Обновляем локальные на основании сервера
+        // === 2. Получаем локальные заметки ===
+        val localNotes = localNotesOnce
+
+        // === 3. Обновляем локальные заметки на основе сервера ===
         remoteNotes.forEach { remoteNote ->
             val localNote = localNotes.find { it.id == remoteNote.id }
 
             when {
+                // на устройстве нет → добавляем
                 localNote == null -> {
-                    // На устройстве нет — добавляем
                     local.insertNote(
-                        remoteNote.toEntity().copy(isSynced = true)
+                        remoteNote.copy(isSynced = true).toEntity()
                     )
                 }
 
-                // Сервер новее → обновляем локально
+                // сервер новее → обновляем локальную
                 remoteNote.updatedAt > localNote.updatedAt -> {
                     local.updateNote(
-                        remoteNote.toEntity().copy(isSynced = true)
+                        remoteNote.copy(isSynced = true).toEntity()
                     )
                 }
             }
         }
 
-        // 4. Удаляем локально то, что удалено на сервере
-        localNotes
-            .filter { it.id !in remoteIds }
-            .forEach { local.deleteNote(it) }
+        // === 4. Определяем локальные изменения, которые нужно отправить ===
+        val pendingLocal = localNotesOnce.filter { !it.isSynced } // все, кто требует отправки
 
-        // 5. Ищем локальные заметки, которые изменились позже сервера
-        val freshLocal = local.getAllNotesOnce()
-            .filter { !it.isDeleted && !it.isSynced }
-
-        freshLocal.forEach { localNote ->
-            val remoteNote = remoteNotes.find { it.id == localNote.id }
-
-            when {
-                // На сервере нет → отправляем
-                remoteNote == null -> {
-                    remote.saveNoteRemote(localNote.toDomain())
-                    local.updateNote(localNote.copy(isSynced = true))
-                }
-
-                // Локальная новее → отправляем обновление
-                localNote.updatedAt > remoteNote.updatedAt -> {
-                    remote.saveNoteRemote(localNote.toDomain())
-                    local.updateNote(localNote.copy(isSynced = true))
-                }
+        pendingLocal.forEach { localNote ->
+            if (localNote.isDeleted) {
+                remote.deleteNoteRemote(localNote.id)
+                local.deleteNote(localNote)
+            } else {
+                remote.saveNoteRemote(localNote.toDomain())
+                local.updateNote(
+                    localNote.copy(isSynced = true)
+                )
             }
         }
     }
-
 }
+

@@ -79,34 +79,22 @@ fun MainScaffold(navController: NavHostController) {
             startDestination = BottomNavScreen.Notes.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Экран заметок
             composable(BottomNavScreen.Notes.route) {
                 NoteScreen(
                     onNoteClick = { noteId ->
                         navController.navigate("note_detail/$noteId")
-                    },
-                    onAddNoteClick = {
-                        navController.navigate("note_detail_new")
                     }
                 )
             }
 
-            // Экран продуктивности
             composable(BottomNavScreen.Productivity.route) { ProductivityScreen() }
 
-            // Профиль
             composable(BottomNavScreen.Profile.route) { ProfileScreen() }
 
-            // Детали существующей заметки с аргументом Int
             composable(
                 route = "note_detail/{noteId}",
-                arguments = listOf(navArgument("noteId") { type = NavType.IntType })
+                arguments = listOf(navArgument("noteId") { type = NavType.StringType })
             ) {
-                NoteDetailScreen(onBack = { navController.popBackStack() })
-            }
-
-            // Создание новой заметки (без аргумента)
-            composable("note_detail_new") {
                 NoteDetailScreen(onBack = { navController.popBackStack() })
             }
         }

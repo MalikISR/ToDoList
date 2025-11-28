@@ -1,56 +1,68 @@
 package com.example.todolist.presentation.notedetail
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Note
-import com.example.domain.usecase.AddNoteUseCase
-import com.example.domain.usecase.GetNoteByIdUseCase
-import com.example.domain.usecase.UpdateNoteUseCase
+import com.example.domain.usecase.note.GetNoteByIdUseCase
+import com.example.domain.usecase.note.UpdateNoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class NoteDetailViewModel @Inject constructor(
     private val getNoteById: GetNoteByIdUseCase,
-    private val addNoteUseCase: AddNoteUseCase,
     private val updateNote: UpdateNoteUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _note = MutableStateFlow<Note?>(null)
-    val note: StateFlow<Note?> = _note
+    val note: StateFlow<Note?> = _note.asStateFlow()
+
+    private val _savedEvent = MutableStateFlow(false)
+    val savedEvent: StateFlow<Boolean> = _savedEvent
+
+    private val autoSaveFlow = MutableStateFlow<Note?>(null)
 
     init {
-        val noteId = savedStateHandle.get<Int>("noteId")
-        if (noteId != null) {
-            viewModelScope.launch {
-                _note.value = getNoteById(noteId)
-            }
-        } else {
-            _note.value = Note(
-                id = 0,
-                title = "",
-                description = "",
-                color = Color.Green.toArgb(),
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                deadline = System.currentTimeMillis() + 86400,
-                isDeleted = false,
-                isPinned = false
-            )
+        val noteId = savedStateHandle.get<String>("noteId")
+
+        viewModelScope.launch {
+            _note.value = noteId?.let { getNoteById(it) }
+        }
+
+        viewModelScope.launch {
+            autoSaveFlow
+                .filterNotNull()
+                .debounce(5000)
+                .collect { note ->
+                    updateNote(note)
+                }
         }
     }
 
     fun saveNote(note: Note) {
         viewModelScope.launch {
-            if (note.id == 0) addNoteUseCase(note)
-            else updateNote(note)
+            updateNote(note)
+            showSavedIndicator()
         }
+    }
+
+    fun onNoteChanged(note: Note) {
+        autoSaveFlow.value = note.copy(
+            updatedAt = System.currentTimeMillis(),
+            isSynced = false
+        )
+    }
+
+    private suspend fun showSavedIndicator() {
+        _savedEvent.value = true
+        delay(1500)
+        _savedEvent.value = false
     }
 }

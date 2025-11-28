@@ -4,12 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.data.local.NoteDao
 import com.example.data.local.NoteDatabase
-import com.example.domain.repository.NoteRepository
-import com.example.domain.usecase.*
-import com.example.data.repository.NoteRepositoryImpl
-import com.example.todolist.remote.FirebaseNoteDataSource
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.data.migration.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,22 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    @Provides
-    @Singleton
-    fun provideRepository(noteDao: NoteDao, remote: FirebaseNoteDataSource): NoteRepository {
-        return NoteRepositoryImpl(noteDao, remote)
-    }
-
-    @Provides
-    fun provideUseCases(repository: NoteRepository): NoteUseCase {
-        return NoteUseCase(
-            getNotes = GetNotesUseCase(repository),
-            addNote = AddNoteUseCase(repository),
-            deleteNote = DeleteNoteUseCase(repository),
-            updateNote = UpdateNoteUseCase(repository),
-            syncFromServer = SyncNotesUseCase(repository)
-        )
-    }
 
     @Provides
     @Singleton
@@ -44,27 +23,13 @@ object AppModule {
             context,
             NoteDatabase::class.java,
             "note_db"
-        ).build()
+        )
+            .addMigrations(MIGRATION_1_2)
+            .build()
     }
 
     @Provides
     fun provideNoteDao(database: NoteDatabase): NoteDao {
         return database.noteDao()
     }
-
-    @Provides
-    @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
-
-    @Provides
-    @Singleton
-    fun provideFirebaseNoteDataSource(
-        firestore: FirebaseFirestore,
-        auth: FirebaseAuth
-    ): FirebaseNoteDataSource = FirebaseNoteDataSource(firestore, auth)
-
 }

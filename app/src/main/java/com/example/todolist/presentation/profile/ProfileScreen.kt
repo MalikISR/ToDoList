@@ -6,79 +6,82 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseAuth
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todolist.presentation.auth.AuthScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen() {
-    val user = FirebaseAuth.getInstance().currentUser
-    var currentUser by remember { mutableStateOf(user) }
-    var showAuthScreen by remember { mutableStateOf(false) }
+fun ProfileScreen(
+    viewModel: ProfileViewModel = hiltViewModel()
+) {
+    var showAuth by remember { mutableStateOf(false) }
+    val name by viewModel.currentUserName.collectAsState()
+    val uid by viewModel.userId.collectAsState()
+
+
+    if (showAuth) {
+        AuthScreen(
+            onAuthSuccess = {
+                showAuth = false
+                viewModel.loginSuccess()
+            }
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Профиль") },
                 actions = {
-                    if (currentUser != null) {
-                        TextButton(onClick = {
-                            FirebaseAuth.getInstance().signOut()
-                            currentUser = null
-                        }) {
+                    if (name != null) {
+                        TextButton(onClick = { viewModel.logout() }) {
                             Text("Выйти", color = MaterialTheme.colorScheme.error)
                         }
                     } else {
-                        TextButton(onClick = { showAuthScreen = true }) {
+                        TextButton(onClick = {
+                            showAuth = true
+                        }) {
                             Text("Войти", color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             )
         }
-    ) { innerPadding ->
+    ) { padding ->
         Column(
             modifier = Modifier
+                .padding(padding)
                 .fillMaxSize()
-                .padding(innerPadding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (currentUser != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Имя: ${currentUser?.displayName ?: "Не указано"}",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text("Email: ${currentUser?.email ?: "Не указано"}")
-                        Text("UID: ${currentUser?.uid}")
-                    }
-                }
-            } else if (showAuthScreen) {
-                AuthScreen(
-                    onAuthSuccess = { uid ->
-                        currentUser = FirebaseAuth.getInstance().currentUser
-                        showAuthScreen = false
-                    }
-                )
+            if (name != null) {
+                UserCard(name!!, uid!!)
             } else {
-                Text(
-                    text = "Вы не вошли в аккаунт",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Вы не вошли в аккаунт")
             }
         }
     }
 }
+
+@Composable
+fun UserCard(name: String, uid: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Имя: $name")
+            Text("UID: $uid")
+        }
+    }
+}
+
+

@@ -53,13 +53,13 @@ android {
 }
 
 dependencies {
-    implementation("com.google.dagger:hilt-android:2.50")
     implementation(project(":data"))
     implementation(project(":domain"))
+    implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-compiler:2.50")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1")
 
-    kapt ("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.6.1")
+    kapt("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.6.1")
 
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
@@ -70,7 +70,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
     implementation("androidx.activity:activity-compose:1.10.1")
-    implementation(platform("androidx.compose:compose-bom:2024.02.01"))
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -78,18 +78,15 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    implementation("com.firebaseui:firebase-ui-auth:8.0.2")
-
-    implementation(platform("com.google.firebase:firebase-bom:32.2.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-appcheck-ktx")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-
     implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc05")
+
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.34.0")
+
+    // --- Material3 (с поддержкой PullToRefresh) ---
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.27.0")
 }
