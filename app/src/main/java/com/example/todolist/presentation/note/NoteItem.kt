@@ -1,7 +1,9 @@
 package com.example.todolist.presentation.note
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,18 +13,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,183 +43,180 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteItem(
     note: Note,
+    isSelected: Boolean,
+    selectionMode: Boolean,
     onClick: () -> Unit,
+    onLongPress: () -> Unit,
     onToggleDone: () -> Unit,
-    onTogglePin: () -> Unit,
-    onDelete: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .graphicsLayer {
-                alpha = if (note.isDone) 0.6f else 1f
-            }
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-        elevation = CardDefaults.cardElevation(6.dp)
+    val offsetX by animateDpAsState(
+        targetValue = if (selectionMode) 24.dp else 0.dp,
+        label = ""
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .width(8.dp)
-                    .fillMaxHeight()
-                    .background(Color(note.color))
+        if (selectionMode) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onLongPress() }
             )
+        }
 
-            Column(
+        Card(
+            modifier = Modifier
+                .graphicsLayer {
+                    alpha = if (note.isDone) 0.6f else 1f
+                }
+                .offset(x = offsetX)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .combinedClickable(
+                    onClick = {
+                        if (selectionMode) onLongPress()
+                        else onClick()
+                    },
+                    onLongClick = onLongPress
+                ),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+            elevation = CardDefaults.cardElevation(6.dp)
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(10.dp)
+                    .height(IntrinsicSize.Min)
             ) {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-
-                    Text(
-                        text = note.title.ifBlank { "Без заголовка" },
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            textDecoration =
-                                if (note.isDone) TextDecoration.LineThrough
-                                else TextDecoration.None,
-                            color = if (note.isDone)
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                    alpha = 0.5f
-                                )
-                            else
-                                MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
-
-
-                    Spacer(Modifier.width(8.dp))
-
-                    Text(
-                        text = formatCreatedAt(note.createdAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = { onToggleDone() },
-                        modifier = Modifier.size(26.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = if (note.isDone)
-                                colorResource(R.color.done_green)
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_done),
-                            contentDescription = "Выполнено",
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-
-                    Spacer(Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = { onTogglePin() },
-                        modifier = Modifier.size(22.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor =
-                                if (note.isPinned) colorResource(R.color.pin_active)
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_pin),
-                            contentDescription = "Закрепить",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-
-                Spacer(Modifier.height(6.dp))
-
                 Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
-                        )
+                    modifier = Modifier
+                        .width(8.dp)
+                        .fillMaxHeight()
+                        .background(Color(note.color))
                 )
 
-                Spacer(Modifier.height(6.dp))
-
-                if (note.description.isNotBlank()) {
-                    Text(
-                        text = htmlToPlainText(note.description),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            textDecoration =
-                                if (note.isDone) TextDecoration.LineThrough
-                                else TextDecoration.None,
-                            color = if (note.isDone)
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                    alpha = 0.4f
-                                )
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        maxLines = 2
-                    )
-                }
-
-                Spacer(Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
                 ) {
-                    val color = deadlineColor(note.deadline)
-                    val timeString = formatDeadline(note.deadline)
 
-                    Text(
-                        text = timeString,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = color
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        Text(
+                            text = note.title.ifBlank { "Без заголовка" },
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                textDecoration =
+                                    if (note.isDone) TextDecoration.LineThrough
+                                    else TextDecoration.None,
+                                color =
+                                    if (note.isDone)
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.weight(1f),
+                            maxLines = 2
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Text(
+                            text = formatCreatedAt(note.createdAt),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = { onToggleDone() },
+                            modifier = Modifier.size(26.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = if (note.isDone)
+                                    colorResource(R.color.done_green)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_done),
+                                contentDescription = "Выполнено",
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                            )
                     )
 
+                    Spacer(Modifier.height(6.dp))
 
-                    IconButton(
-                        onClick = { onDelete() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = "Удалить"
+                    if (note.description.isNotBlank()) {
+                        Text(
+                            text = htmlToPlainText(note.description),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                textDecoration =
+                                    if (note.isDone) TextDecoration.LineThrough
+                                    else TextDecoration.None,
+                                color = if (note.isDone)
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            maxLines = 2
                         )
                     }
-                }
 
+                    Spacer(Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatDeadline(note.deadline),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = deadlineColor(note.deadline)
+                        )
+
+                        if (note.isPinned) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_pin),
+                                contentDescription = "Закреплено",
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 @Composable
 fun deadlineColor(deadline: Long): Color {
     val now = System.currentTimeMillis()

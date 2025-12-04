@@ -40,6 +40,9 @@ class NoteViewModel @Inject constructor(
                 emptyList()
             )
 
+    private val _selectedNotes = MutableStateFlow(setOf<String>())
+    val selectedNotes: StateFlow<Set<String>> = _selectedNotes.asStateFlow()
+
     private val _syncing = MutableStateFlow(false)
     val syncing: StateFlow<Boolean> = _syncing.asStateFlow()
 
@@ -49,15 +52,9 @@ class NoteViewModel @Inject constructor(
 
     fun isAuthorized(): Boolean = isAuthorizedUseCase()
 
-    fun deleteNote(note: Note) {
+    private fun deleteNote(note: Note) {
         viewModelScope.launch {
             deleteNoteUseCase(note)
-        }
-    }
-
-    fun togglePin(note: Note) {
-        viewModelScope.launch {
-            togglePinUseCase(note)
         }
     }
 
@@ -100,6 +97,35 @@ class NoteViewModel @Inject constructor(
             addNoteUseCase(note)
         }
         return id
+    }
+
+    fun toggleSelection(noteId: String) {
+        val current = _selectedNotes.value
+        _selectedNotes.value = if (current.contains(noteId)) {
+            current - noteId
+        } else {
+            current + noteId
+        }
+    }
+
+    fun clearSelection() {
+        _selectedNotes.value = emptySet()
+    }
+
+    fun deleteSelected() {
+        viewModelScope.launch {
+            val notesToDelete = notes.value.filter { it.id in _selectedNotes.value }
+            notesToDelete.forEach { deleteNote(it) }
+            clearSelection()
+        }
+    }
+
+    fun pinSelected() {
+        viewModelScope.launch {
+            val selected = notes.value.filter { it.id in _selectedNotes.value }
+            selected.forEach { togglePinUseCase(it) }
+            clearSelection()
+        }
     }
 
     fun filteredNotes(
@@ -157,7 +183,7 @@ class NoteViewModel @Inject constructor(
         )
     }
 
-    fun priorityWeight(color: Int): Int {
+    private fun priorityWeight(color: Int): Int {
         return when (color) {
             Color.Red.toArgb() -> 0
             Color.Yellow.toArgb() -> 1
@@ -166,15 +192,15 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun pinWeight(note: Note): Int {
+    private fun pinWeight(note: Note): Int {
         return if (note.isPinned) 0 else 1
     }
 
-    fun doneWeight(note: Note): Int {
+    private fun doneWeight(note: Note): Int {
         return if (note.isDone) 2 else 1
     }
 
-    fun deadlineGroup(deadline: Long?): Int {
+    private fun deadlineGroup(deadline: Long?): Int {
         if (deadline == null) return 1
 
         val now = System.currentTimeMillis()
@@ -185,7 +211,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun deadlineSort(note: Note): Long {
+    private fun deadlineSort(note: Note): Long {
         val deadline = note.deadline
         val now = System.currentTimeMillis()
 

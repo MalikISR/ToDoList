@@ -27,7 +27,8 @@ class NoteDetailViewModel @Inject constructor(
     private val _savedEvent = MutableStateFlow(false)
     val savedEvent: StateFlow<Boolean> = _savedEvent
 
-    private val autoSaveFlow = MutableStateFlow<Note?>(null)
+    private val noteChanges = MutableStateFlow<Note?>(null)
+    private var lastSavedNote: Note? = null
 
     init {
         val noteId = savedStateHandle.get<String>("noteId")
@@ -37,32 +38,41 @@ class NoteDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            autoSaveFlow
+            noteChanges
                 .filterNotNull()
-                .debounce(5000)
-                .collect { note ->
-                    updateNote(note)
+                .debounce(1200)
+                .filter { hasChanges(it) }
+                .collect { latest ->
+                    updateNote(latest)
+                    lastSavedNote = latest
+                    flashSaveIndicator()
                 }
         }
     }
 
-    fun saveNote(note: Note) {
+    fun saveBeforeLeave() {
+        val current = noteChanges.value ?: return
         viewModelScope.launch {
-            updateNote(note)
-            showSavedIndicator()
+            updateNote(current)
+            lastSavedNote = current
+            flashSaveIndicator()
         }
     }
 
     fun onNoteChanged(note: Note) {
-        autoSaveFlow.value = note.copy(
+        noteChanges.value = note.copy(
             updatedAt = System.currentTimeMillis(),
             isSynced = false
         )
     }
 
-    private suspend fun showSavedIndicator() {
+    private fun hasChanges(new: Note): Boolean {
+        return new != lastSavedNote
+    }
+
+    private suspend fun flashSaveIndicator() {
         _savedEvent.value = true
-        delay(1500)
+        delay(1200)
         _savedEvent.value = false
     }
 }

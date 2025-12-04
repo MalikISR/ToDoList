@@ -7,5 +7,6 @@ interface AuthRepository {
     fun isAuthorized(): Boolean
     fun getUserName(): String?
     fun getUserId(): String?
+    fun getUserEmail(): String?
 }
 

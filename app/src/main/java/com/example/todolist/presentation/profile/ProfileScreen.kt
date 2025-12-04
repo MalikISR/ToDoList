@@ -15,9 +15,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     var showAuth by remember { mutableStateOf(false) }
-    val name by viewModel.currentUserName.collectAsState()
-    val uid by viewModel.userId.collectAsState()
-
+    val userInfo by viewModel.userInfo.collectAsState()
 
     if (showAuth) {
         AuthScreen(
@@ -34,14 +32,12 @@ fun ProfileScreen(
             TopAppBar(
                 title = { Text("Профиль") },
                 actions = {
-                    if (name != null) {
+                    if (userInfo != null) {
                         TextButton(onClick = { viewModel.logout() }) {
                             Text("Выйти", color = MaterialTheme.colorScheme.error)
                         }
                     } else {
-                        TextButton(onClick = {
-                            showAuth = true
-                        }) {
+                        TextButton(onClick = { showAuth = true }) {
                             Text("Войти", color = MaterialTheme.colorScheme.primary)
                         }
                     }
@@ -53,35 +49,23 @@ fun ProfileScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
-            if (name != null) {
-                UserCard(name!!, uid!!)
+            if (userInfo != null) {
+                ProfileCard(
+                    name = userInfo!!.name ?:"_",
+                    email = userInfo!!.email ?: "Не указано",
+                    uid = userInfo!!.id ?: "Неизвестно"
+                )
             } else {
-                Text("Вы не вошли в аккаунт")
+                Text(
+                    "Вы не вошли в аккаунт",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
-
-@Composable
-fun UserCard(name: String, uid: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Имя: $name")
-            Text("UID: $uid")
-        }
-    }
-}
-
-

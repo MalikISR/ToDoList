@@ -41,5 +41,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getUserName(): String? = auth.currentUser?.displayName
 
     override fun getUserId(): String? = auth.currentUser?.uid
+
+    override fun getUserEmail(): String? = auth.currentUser?.email
 }
 

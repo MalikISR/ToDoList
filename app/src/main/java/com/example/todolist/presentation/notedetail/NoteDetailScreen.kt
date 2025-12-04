@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -99,24 +98,16 @@ fun NoteDetailScreen(
                 TopAppBar(
                     title = { Text("Заметка") },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(onClick = {
+                            viewModel.saveBeforeLeave()
+                            onBack()
+                        }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
                         }
                     },
                     actions = {
                         IconButton(onClick = {
-                            viewModel.saveNote(
-                                note.copy(
-                                    title = title,
-                                    description = description,
-                                    color = selectedColor,
-                                    deadline = deadline,
-                                    isPinned = pinned,
-                                    updatedAt = System.currentTimeMillis(),
-                                    isDone = false,
-                                    isSynced = false
-                                )
-                            )
+                            viewModel.saveBeforeLeave()
                         }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_save),
@@ -195,7 +186,6 @@ fun NoteDetailScreen(
                     }
                 }
             }
-
 
             if (showSettings) {
                 ModalBottomSheet(
@@ -342,7 +332,6 @@ fun PriorityColorOption(
         )
     }
 }
-
 
 fun formatFullDateRu(time: Long): String {
     val formatter = SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru"))

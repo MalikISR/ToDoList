@@ -2,7 +2,8 @@ package com.example.todolist.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.repository.AuthRepository
+import com.example.domain.model.UserInfo
+import com.example.domain.usecase.auth.GetUserInfoUseCase
 import com.example.domain.usecase.auth.IsAuthorizedUseCase
 import com.example.domain.usecase.auth.LogoutUseCase
 import com.example.domain.usecase.note.SyncNotesUseCase
@@ -14,29 +15,27 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
+    private val getUserInfoUseCase: GetUserInfoUseCase,
     private val syncNotesUseCase: SyncNotesUseCase,
     private val isAuthorizedUseCase: IsAuthorizedUseCase,
     private val logoutUseCase: LogoutUseCase,
-    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _currentUser = MutableStateFlow(authRepository.getUserName())
-    val currentUserName: StateFlow<String?> = _currentUser
-
-    private val _userEmail = MutableStateFlow(authRepository.getUserId())
-    val userId: StateFlow<String?> = _userEmail
+    private val _userInfo = MutableStateFlow<UserInfo?>(null)
+    val userInfo: StateFlow<UserInfo?> = _userInfo
 
     private val _shouldSync = MutableStateFlow(false)
     val shouldSync: StateFlow<Boolean> = _shouldSync
 
+    init {
+        refreshUser()
+    }
 
-    fun refreshUser() {
-        if (isAuthorizedUseCase()) {
-            _currentUser.value = authRepository.getUserName()
-            _userEmail.value = authRepository.getUserId()
+    private fun refreshUser() {
+        _userInfo.value = if (isAuthorizedUseCase()) {
+            getUserInfoUseCase()
         } else {
-            _currentUser.value = null
-            _userEmail.value = null
+            null
         }
     }
 
@@ -53,7 +52,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun syncNotes() {
+    private fun syncNotes() {
         viewModelScope.launch {
             syncNotesUseCase()
             _shouldSync.value = true

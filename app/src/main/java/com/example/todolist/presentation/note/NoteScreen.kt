@@ -1,5 +1,6 @@
 package com.example.todolist.presentation.note
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.domain.model.Note
 import com.example.todolist.R
 import com.example.todolist.presentation.profile.ProfileViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -71,7 +72,7 @@ fun NoteScreen(
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val shouldSync by profileViewModel.shouldSync.collectAsState()
 
-    var noteToDelete by remember { mutableStateOf<Note?>(null) }
+    var noteToDelete by remember { mutableStateOf(false) }
 
     val syncing by viewModel.syncing.collectAsState()
     val state = rememberSwipeRefreshState(isRefreshing = syncing)
@@ -85,6 +86,9 @@ fun NoteScreen(
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
 
+    val selectedNotes by viewModel.selectedNotes.collectAsState()
+    val isSelectionMode = selectedNotes.isNotEmpty()
+
     fun toggleFilter(filter: NoteColorFilter) {
         selectedFilters = if (selectedFilters.contains(filter)) {
             selectedFilters - filter
@@ -92,6 +96,11 @@ fun NoteScreen(
             selectedFilters + filter
         }
     }
+
+    BackHandler(enabled = isSelectionMode) {
+        viewModel.clearSelection()
+    }
+
 
     LaunchedEffect(shouldSync) {
         if (shouldSync) {
@@ -105,34 +114,50 @@ fun NoteScreen(
             SnackbarHost(snackbarHostState)
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Заметки",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier
-                        .weight(1f)
-                        .width(130.dp)
-                )
-
-                IconButton(
-                    onClick = { onNoteClick(viewModel.createDraftNote()) },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add_notes),
-                        contentDescription = "Добавить"
-                    )
+            TopAppBar(
+                title = {
+                    if (isSelectionMode) {
+                        Text("Выбрано: ${selectedNotes.size}")
+                    } else {
+                        Text("Заметки")
+                    }
+                },
+                actions = {
+                    if (isSelectionMode) {
+                        IconButton(onClick = { viewModel.pinSelected() }) {
+                            Icon(
+                                painterResource(R.drawable.ic_pin),
+                                contentDescription = "Закрепить"
+                            )
+                        }
+                        IconButton(onClick = { noteToDelete = true }) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                contentDescription = "Удалить"
+                            )
+                        }
+                        IconButton(onClick = { viewModel.clearSelection() }) {
+                            Icon(
+                                painterResource(R.drawable.ic_close),
+                                contentDescription = "Отмена"
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { onNoteClick(viewModel.createDraftNote()) }) {
+                            Icon(
+                                painterResource(R.drawable.ic_add_notes),
+                                contentDescription = "Добавить"
+                            )
+                        }
+                    }
                 }
-            }
+            )
+
 
             Row(
                 modifier = Modifier
@@ -300,40 +325,42 @@ fun NoteScreen(
                     items(sortedNotes) { note ->
                         NoteItem(
                             note = note,
+                            isSelected = selectedNotes.contains(note.id),
+                            selectionMode = isSelectionMode,
                             onClick = { onNoteClick(note.id) },
-                            onToggleDone = { viewModel.toggleDone(note) },
-                            onTogglePin = { viewModel.togglePin(note) },
-                            onDelete = { noteToDelete = note }
+                            onLongPress = { viewModel.toggleSelection(note.id) },
+                            onToggleDone = { viewModel.toggleDone(note) }
                         )
                     }
                 }
             }
-            if (noteToDelete != null) {
+            if (noteToDelete) {
                 AlertDialog(
-                    onDismissRequest = { noteToDelete = null },
+                    onDismissRequest = { noteToDelete = false },
                     title = {
                         Text(
-                            "Удалить заметку?",
+                            "Удалить выбранные заметки?",
                             style = MaterialTheme.typography.titleLarge
                         )
                     },
                     text = {
                         Text(
-                            "Вы уверены? Это действие нельзя отменить.",
+                            "Вы уверены? Это действие нельзя отменить.\n" +
+                                    "Выбрано: ${selectedNotes.size}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     dismissButton = {
-                        TextButton(onClick = { noteToDelete = null }) {
+                        TextButton(onClick = { noteToDelete = false }) {
                             Text("Отмена")
                         }
                     },
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                viewModel.deleteNote(noteToDelete!!)
-                                noteToDelete = null
+                                viewModel.deleteSelected()
+                                noteToDelete = false
                             }
                         ) {
                             Text(
