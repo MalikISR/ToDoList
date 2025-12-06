@@ -1,27 +1,24 @@
 package com.example.todolist.presentation.productivity
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-enum class PomodoroPhase {
-    FOCUS,
-    SHORT_BREAK,
-    LONG_BREAK
-}
+enum class PomodoroPhase { WORK, BREAK }
 
 data class PomodoroConfig(
     val focusMinutes: Int,
-    val shortBreakMinutes: Int,
-    val longBreakMinutes: Int,
-    val sessionsBeforeLongBreak: Int
+    val breakMinutes: Int
 )
 
 data class PomodoroState(
@@ -37,20 +34,21 @@ data class StopwatchState(
     val isRunning: Boolean
 )
 
-class ProductivityViewModel : ViewModel() {
+@HiltViewModel
+class ProductivityViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
     private val defaultConfig = PomodoroConfig(
         focusMinutes = 25,
-        shortBreakMinutes = 5,
-        longBreakMinutes = 15,
-        sessionsBeforeLongBreak = 4
+        breakMinutes = 5
     )
 
     private val _pomodoroState = MutableStateFlow(
         PomodoroState(
             remainingSeconds = defaultConfig.focusMinutes * 60,
             isRunning = false,
-            phase = PomodoroPhase.FOCUS,
+            phase = PomodoroPhase.WORK,
             completedFocusSessions = 0,
             config = defaultConfig
         )
@@ -65,161 +63,126 @@ class ProductivityViewModel : ViewModel() {
     )
     val stopwatchState: StateFlow<StopwatchState> = _stopwatchState.asStateFlow()
 
-    private var pomodoroJob: Job? = null
-    private var stopwatchJob: Job? = null
+    private val timerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context, intent: Intent) {
+            when (intent.action) {
 
-    fun togglePomodoro() {
-        val state = _pomodoroState.value
-        if (state.isRunning) {
-            pausePomodoro()
-        } else {
-            startPomodoro()
-        }
-    }
+                PomodoroService.ACTION_STATE -> {
+                    val cfg = PomodoroConfig(
+                        focusMinutes = intent.getIntExtra("focus", defaultConfig.focusMinutes),
+                        breakMinutes = intent.getIntExtra("break", defaultConfig.breakMinutes)
+                    )
 
-    private fun startPomodoro() {
-        if (pomodoroJob?.isActive == true) return
+                    _pomodoroState.update {
+                        it.copy(
+                            remainingSeconds = intent.getIntExtra("remaining", it.remainingSeconds),
+                            isRunning = intent.getBooleanExtra("running", false),
+                            phase = PomodoroPhase.valueOf(intent.getStringExtra("phase") ?: it.phase.name),
+                            completedFocusSessions = intent.getIntExtra("completed", it.completedFocusSessions),
+                            config = cfg
+                        )
+                    }
+                }
 
-        _pomodoroState.update { it.copy(isRunning = true) }
-
-        pomodoroJob = viewModelScope.launch {
-            while (isActive && _pomodoroState.value.isRunning) {
-                delay(1000)
-                tickPomodoro()
+                StopwatchService.ACTION_STATE -> {
+                    _stopwatchState.update {
+                        it.copy(
+                            elapsedSeconds = intent.getIntExtra("elapsed", it.elapsedSeconds),
+                            isRunning = intent.getBooleanExtra("running", false)
+                        )
+                    }
+                }
             }
         }
     }
 
-    private fun pausePomodoro() {
-        _pomodoroState.update { it.copy(isRunning = false) }
-        pomodoroJob?.cancel()
-        pomodoroJob = null
+    init {
+        val filter = IntentFilter().apply {
+            addAction(PomodoroService.ACTION_STATE)
+            addAction(StopwatchService.ACTION_STATE)
+        }
+
+        ContextCompat.registerReceiver(
+            context,
+            timerReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    override fun onCleared() {
+        context.unregisterReceiver(timerReceiver)
+        super.onCleared()
+    }
+
+    // ---------- CUSTOM POMODORO INPUT ----------
+
+    fun startCustomPomodoro(work: Int, rest: Int) {
+        val cfg = PomodoroConfig(work, rest)
+
+        _pomodoroState.update {
+            it.copy(
+                config = cfg,
+                remainingSeconds = work * 60,
+                phase = PomodoroPhase.WORK,
+                completedFocusSessions = 0,
+                isRunning = false
+            )
+        }
+
+        PomodoroService.start(
+            context = context,
+            config = cfg,
+            phase = PomodoroPhase.WORK,
+            completed = 0,
+            remainingSeconds = work * 60
+        )
+    }
+
+    // ---------- POMODORO ----------
+
+    fun togglePomodoro() {
+        val state = _pomodoroState.value
+        if (state.isRunning) {
+            PomodoroService.pause(context)
+        } else {
+            PomodoroService.start(
+                context = context,
+                config = state.config,
+                phase = state.phase,
+                completed = state.completedFocusSessions,
+                remainingSeconds = state.remainingSeconds
+            )
+        }
     }
 
     fun resetPomodoro() {
-        pausePomodoro()
-        _pomodoroState.update { state ->
-            state.copy(
-                remainingSeconds = state.config.focusMinutes * 60,
-                phase = PomodoroPhase.FOCUS,
+        PomodoroService.stop(context)
+        _pomodoroState.update {
+            it.copy(
+                remainingSeconds = it.config.focusMinutes * 60,
+                isRunning = false,
+                phase = PomodoroPhase.WORK,
                 completedFocusSessions = 0
             )
         }
     }
 
-    private fun tickPomodoro() {
-        val state = _pomodoroState.value
-        if (state.remainingSeconds > 0) {
-            _pomodoroState.update { it.copy(remainingSeconds = it.remainingSeconds - 1) }
-        } else {
-            onPhaseFinished()
-        }
-    }
-
-    private fun onPhaseFinished() {
-        val state = _pomodoroState.value
-        when (state.phase) {
-            PomodoroPhase.FOCUS -> {
-                val newCompleted = state.completedFocusSessions + 1
-                val nextPhase =
-                    if (newCompleted % state.config.sessionsBeforeLongBreak == 0)
-                        PomodoroPhase.LONG_BREAK
-                    else
-                        PomodoroPhase.SHORT_BREAK
-
-                val nextSeconds = when (nextPhase) {
-                    PomodoroPhase.SHORT_BREAK -> state.config.shortBreakMinutes * 60
-                    PomodoroPhase.LONG_BREAK -> state.config.longBreakMinutes * 60
-                    else -> state.config.focusMinutes * 60
-                }
-
-                _pomodoroState.update {
-                    it.copy(
-                        phase = nextPhase,
-                        remainingSeconds = nextSeconds,
-                        completedFocusSessions = newCompleted
-                    )
-                }
-            }
-
-            PomodoroPhase.SHORT_BREAK, PomodoroPhase.LONG_BREAK -> {
-                _pomodoroState.update {
-                    it.copy(
-                        phase = PomodoroPhase.FOCUS,
-                        remainingSeconds = it.config.focusMinutes * 60
-                    )
-                }
-            }
-        }
-    }
-
-    private fun setPomodoroPreset(preset: PomodoroConfig) {
-        pausePomodoro()
-        _pomodoroState.update {
-            PomodoroState(
-                remainingSeconds = preset.focusMinutes * 60,
-                isRunning = false,
-                phase = PomodoroPhase.FOCUS,
-                completedFocusSessions = 0,
-                config = preset
-            )
-        }
-    }
-
-    fun classicPreset() {
-        setPomodoroPreset(
-            PomodoroConfig(
-                focusMinutes = 25,
-                shortBreakMinutes = 5,
-                longBreakMinutes = 15,
-                sessionsBeforeLongBreak = 4
-            )
-        )
-    }
-
-    fun longPreset() {
-        setPomodoroPreset(
-            PomodoroConfig(
-                focusMinutes = 50,
-                shortBreakMinutes = 10,
-                longBreakMinutes = 30,
-                sessionsBeforeLongBreak = 2
-            )
-        )
-    }
+    // ---------- STOPWATCH ----------
 
     fun toggleStopwatch() {
         val state = _stopwatchState.value
         if (state.isRunning) {
-            pauseStopwatch()
+            StopwatchService.pause(context)
         } else {
-            startStopwatch()
+            StopwatchService.start(context, state.elapsedSeconds)
         }
-    }
-
-    private fun startStopwatch() {
-        if (stopwatchJob?.isActive == true) return
-
-        _stopwatchState.update { it.copy(isRunning = true) }
-
-        stopwatchJob = viewModelScope.launch {
-            while (isActive && _stopwatchState.value.isRunning) {
-                delay(1000)
-                _stopwatchState.update { s -> s.copy(elapsedSeconds = s.elapsedSeconds + 1) }
-            }
-        }
-    }
-
-    private fun pauseStopwatch() {
-        _stopwatchState.update { it.copy(isRunning = false) }
-        stopwatchJob?.cancel()
-        stopwatchJob = null
     }
 
     fun resetStopwatch() {
-        pauseStopwatch()
-        _stopwatchState.update { StopwatchState(elapsedSeconds = 0, isRunning = false) }
+        StopwatchService.stop(context)
+        _stopwatchState.update {
+            StopwatchState(0, false)
+        }
     }
-
-    // endregion
 }

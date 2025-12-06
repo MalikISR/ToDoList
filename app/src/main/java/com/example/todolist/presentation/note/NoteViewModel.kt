@@ -12,6 +12,7 @@ import com.example.domain.usecase.note.GetNotesUseCase
 import com.example.domain.usecase.note.SyncNotesUseCase
 import com.example.domain.usecase.note.ToggleDoneUseCase
 import com.example.domain.usecase.note.TogglePinUseCase
+import com.example.todolist.notification.NoteDeadlineScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NoteViewModel @Inject constructor(
+    private val noteDeadlineScheduler: NoteDeadlineScheduler,
     getNotesUseCase: GetNotesUseCase,
     private val deleteNoteUseCase: DeleteNoteUseCase,
     private val syncNotesUseCase: SyncNotesUseCase,
@@ -54,6 +56,7 @@ class NoteViewModel @Inject constructor(
 
     private fun deleteNote(note: Note) {
         viewModelScope.launch {
+            noteDeadlineScheduler.cancel(note.id)
             deleteNoteUseCase(note)
         }
     }

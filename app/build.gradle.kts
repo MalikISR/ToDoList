@@ -89,4 +89,6 @@ dependencies {
 
     // --- Material3 (с поддержкой PullToRefresh) ---
     implementation("com.google.accompanist:accompanist-swiperefresh:0.27.0")
+
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

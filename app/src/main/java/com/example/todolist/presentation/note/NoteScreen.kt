@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -171,7 +172,7 @@ fun NoteScreen(
                     onValueChange = { searchQuery = it },
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp),
+                        .heightIn(min = 56.dp),
                     placeholder = { Text("Поиск...") },
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
@@ -211,21 +212,21 @@ fun NoteScreen(
                         onDismissRequest = { showFilterMenu = false }
                     ) {
                         FilterCheckboxItem(
-                            text = "Красные",
+                            text = "Срочные",
                             checked = selectedFilters.contains(NoteColorFilter.Red)
                         ) {
                             toggleFilter(NoteColorFilter.Red)
                         }
 
                         FilterCheckboxItem(
-                            text = "Жёлтые",
+                            text = "Важные",
                             checked = selectedFilters.contains(NoteColorFilter.Yellow)
                         ) {
                             toggleFilter(NoteColorFilter.Yellow)
                         }
 
                         FilterCheckboxItem(
-                            text = "Зелёные",
+                            text = "Обычные",
                             checked = selectedFilters.contains(NoteColorFilter.Green)
                         ) {
                             toggleFilter(NoteColorFilter.Green)

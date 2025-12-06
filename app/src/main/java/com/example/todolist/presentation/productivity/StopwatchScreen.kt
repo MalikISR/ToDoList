@@ -49,7 +49,9 @@ fun StopwatchScreen(
         ) {
             Button(
                 onClick = onToggle,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 shape = MaterialTheme.shapes.large
             ) {
                 Text(if (state.isRunning) "Пауза" else "Старт")
@@ -57,7 +59,9 @@ fun StopwatchScreen(
 
             OutlinedButton(
                 onClick = onReset,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 shape = MaterialTheme.shapes.large
             ) {
                 Text("Сброс")

@@ -45,8 +45,9 @@ fun ProductivityScreen(
                     state = pomodoroState,
                     onToggle = { viewModel.togglePomodoro() },
                     onReset = { viewModel.resetPomodoro() },
-                    onClassicPreset = { viewModel.classicPreset() },
-                    onLongPreset = { viewModel.longPreset() }
+                    onStartCustom = { work, rest ->
+                        viewModel.startCustomPomodoro(work, rest)
+                    }
                 )
 
                 1 -> StopwatchScreen(

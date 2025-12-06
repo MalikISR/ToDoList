@@ -1,17 +1,26 @@
 package com.example.todolist
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.example.todolist.notification.NotificationChannels
 import com.example.todolist.presentation.note.NoteScreen
 import com.example.todolist.presentation.productivity.ProductivityScreen
 import com.example.todolist.presentation.profile.ProfileScreen
@@ -22,19 +31,61 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val startNoteId = intent.getStringExtra("extra_note_id")
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
+        NotificationChannels.createAll(this)
+
         setContent {
             TodolistTheme {
                 val navController = rememberNavController()
-                MainScaffold(navController = navController)
+                MainScaffold(
+                    navController = navController,
+                    startNoteId = startNoteId
+                )
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
 }
 
 @Composable
-fun MainScaffold(navController: NavHostController) {
+fun MainScaffold(
+    navController: NavHostController,
+    startNoteId: String?
+) {
+    val currentStartNoteId by rememberUpdatedState(startNoteId)
+
+    LaunchedEffect(currentStartNoteId) {
+        if (currentStartNoteId != null) {
+            navController.navigate("note_detail/$currentStartNoteId") {
+                popUpTo(BottomNavScreen.Notes.route) { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+    }
+
     val items = listOf(
         BottomNavScreen.Notes,
         BottomNavScreen.Productivity,

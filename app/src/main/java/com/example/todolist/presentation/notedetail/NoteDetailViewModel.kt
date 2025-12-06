@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Note
 import com.example.domain.usecase.note.GetNoteByIdUseCase
 import com.example.domain.usecase.note.UpdateNoteUseCase
+import com.example.todolist.notification.NoteDeadlineScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class NoteDetailViewModel @Inject constructor(
     private val getNoteById: GetNoteByIdUseCase,
     private val updateNote: UpdateNoteUseCase,
+    private val noteDeadlineScheduler: NoteDeadlineScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -45,6 +47,13 @@ class NoteDetailViewModel @Inject constructor(
                 .collect { latest ->
                     updateNote(latest)
                     lastSavedNote = latest
+
+                    val deadline = latest.deadline
+                    noteDeadlineScheduler.schedule(
+                        noteId = latest.id,
+                        noteTitle = latest.title,
+                        deadlineMillis = deadline
+                    )
                     flashSaveIndicator()
                 }
         }
@@ -55,6 +64,13 @@ class NoteDetailViewModel @Inject constructor(
         viewModelScope.launch {
             updateNote(current)
             lastSavedNote = current
+
+            val deadline = current.deadline
+            noteDeadlineScheduler.schedule(
+                noteId = current.id,
+                noteTitle = current.title,
+                deadlineMillis = deadline
+            )
             flashSaveIndicator()
         }
     }
