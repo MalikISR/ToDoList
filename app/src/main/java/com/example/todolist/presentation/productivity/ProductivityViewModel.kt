@@ -115,8 +115,6 @@ class ProductivityViewModel @Inject constructor(
         super.onCleared()
     }
 
-    // ---------- CUSTOM POMODORO INPUT ----------
-
     fun startCustomPomodoro(work: Int, rest: Int) {
         val cfg = PomodoroConfig(work, rest)
 
@@ -138,8 +136,6 @@ class ProductivityViewModel @Inject constructor(
             remainingSeconds = work * 60
         )
     }
-
-    // ---------- POMODORO ----------
 
     fun togglePomodoro() {
         val state = _pomodoroState.value
@@ -167,8 +163,6 @@ class ProductivityViewModel @Inject constructor(
             )
         }
     }
-
-    // ---------- STOPWATCH ----------
 
     fun toggleStopwatch() {
         val state = _stopwatchState.value

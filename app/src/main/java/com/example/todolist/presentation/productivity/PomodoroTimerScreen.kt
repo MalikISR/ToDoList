@@ -48,7 +48,6 @@ fun PomodoroTimerScreen(
 
     var showSheet by remember { mutableStateOf(false) }
 
-    // При открытии модалки подставляем текущие значения
     var workInput by remember { mutableStateOf(state.config.focusMinutes.toString()) }
     var restInput by remember { mutableStateOf(state.config.breakMinutes.toString()) }
 
@@ -60,10 +59,9 @@ fun PomodoroTimerScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // ▼ Центральный блок теперь центрируется вертикально
         Column(
             modifier = Modifier
-                .weight(1f)   // ← занимает всё доступное пространство
+                .weight(1f)
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -104,7 +102,6 @@ fun PomodoroTimerScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // ▼ Нижний блок кнопок остаётся снизу
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
@@ -149,8 +146,6 @@ fun PomodoroTimerScreen(
         }
     }
 
-
-    // ---------- BOTTOM SHEET ----------
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false }
@@ -168,7 +163,6 @@ fun PomodoroTimerScreen(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                // Красивые поля — мягкий фон, округление
                 CustomInputField(
                     value = workInput,
                     label = "Время работы (мин)",

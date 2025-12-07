@@ -77,7 +77,7 @@ class NoteRepositoryImpl(
         }
 
         // === 4. Определяем локальные изменения, которые нужно отправить ===
-        val pendingLocal = localNotesOnce.filter { !it.isSynced } // все, кто требует отправки
+        val pendingLocal = localNotesOnce.filter { !it.isSynced }
 
         pendingLocal.forEach { localNote ->
             if (localNote.isDeleted) {
@@ -92,4 +92,3 @@ class NoteRepositoryImpl(
         }
     }
 }
-
