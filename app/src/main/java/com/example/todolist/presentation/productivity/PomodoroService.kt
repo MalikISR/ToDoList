@@ -209,7 +209,6 @@ class PomodoroService : Service() {
         val ringtone = RingtoneManager.getRingtone(applicationContext, uri)
         ringtone.play()
 
-        // остановим через 3 секунды
         scope.launch {
             delay(3000)
             ringtone.stop()

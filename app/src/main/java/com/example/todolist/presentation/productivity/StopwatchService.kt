@@ -31,7 +31,6 @@ class StopwatchService : Service() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "todolist:timerLock")
         wakeLock.acquire()
-
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
